@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SQL — 3D голографиялық оқулық</title>
+<style>
+:root{--g:#ffc94d;--g2:#ffe9a8;--ink:#3a2a10;--bg:#05070f}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#14204a 0%,#070a1a 55%,#02030a 100%);color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:1;touch-action:none;cursor:grab}
+#top{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;gap:8px;pointer-events:none}
+#top>*{pointer-events:auto}
+h1{font:600 clamp(13px,2.2vw,20px) Georgia,serif;color:var(--g);letter-spacing:.08em;text-shadow:0 0 14px #ffb30088}
+.tb button,.nav button{background:#ffffff10;border:1px solid #ffc94d66;color:var(--g2);border-radius:999px;padding:7px 13px;cursor:pointer;font-size:13px;backdrop-filter:blur(6px);transition:.2s}
+.tb button:hover,.nav button:hover:not(:disabled){background:#ffc94d33;box-shadow:0 0 14px #ffc94d66}
+.nav button:disabled{opacity:.35;cursor:default}
+.tb{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#ff9d00,#ffe28a);z-index:9;box-shadow:0 0 10px var(--g);transition:width .5s}
+#info{position:fixed;z-index:6;left:14px;top:56px;max-width:min(300px,86vw);background:#0b1230cc;border:1px solid #ffc94d88;border-radius:14px;padding:12px 14px;display:none;backdrop-filter:blur(8px);box-shadow:0 0 24px #ffc94d44;font-size:13px;line-height:1.45}
+#info b{color:var(--g);font-size:15px;display:block;margin-bottom:4px}#info i{display:block;margin-top:6px;color:#9fd2ff;font-style:normal}
+#hint{position:fixed;z-index:4;top:50px;width:100%;text-align:center;font-size:12px;color:#ffe9a8aa;pointer-events:none}
+#wrap{position:fixed;z-index:3;left:50%;bottom:66px;width:min(96vw,1000px);height:min(46vh,430px);transform:translateX(-50%);perspective:1800px}
+#book{position:relative;width:100%;height:100%;transform:rotateX(16deg);transform-origin:50% 100%;filter:drop-shadow(0 30px 30px #000a)}
+#spread{position:relative;display:flex;height:100%;perspective:1800px;border-radius:8px;background:#4a2c0c;padding:6px;box-shadow:0 0 0 2px #8a5a1c,0 0 40px #ffb30033}
+.pg{flex:1;overflow:auto;padding:14px 18px;color:var(--ink);font:clamp(11px,1.45vw,14.5px)/1.5 Georgia,"Times New Roman",serif;background:linear-gradient(90deg,#f3e5c0,#fbf3dc 12%,#f6ebcb);position:relative}
+#L{border-radius:4px 0 0 4px;background:linear-gradient(270deg,#e8d6a8,#fbf3dc 14%,#f6ebcb)}
+#R{border-radius:0 4px 4px 0}
+.pg h2{font-size:1.25em;color:#8a4b00;margin-bottom:6px;border-bottom:2px solid #d9b45a;padding-bottom:3px}
+.pg p,.pg li{margin:5px 0}.pg ul{padding-left:18px}
+code{background:#2a1c08;color:#ffe08a;padding:2px 6px;border-radius:5px;font:12px ui-monospace,Menlo,monospace;display:inline-block;margin:2px 0}
+table{border-collapse:collapse;width:100%;font-size:.92em;margin:6px 0}td,th{border:1px solid #c9a24d;padding:3px 6px;text-align:left}th{background:#e9cf85}
+.pbtn{background:linear-gradient(#ffcf5a,#d08a00);color:#2a1700;border:0;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:700;margin:4px 4px 4px 0}
+.card{border:1px solid #c9a24d;border-radius:10px;padding:6px 9px;margin:5px 0;cursor:pointer;background:#fff6;transition:.2s}.card:hover,.card.on{background:#ffd96655;box-shadow:0 0 10px #ffb300}
+.opt{display:block;width:100%;text-align:left;margin:5px 0;padding:7px 10px;border:1px solid #c9a24d;background:#fff8;border-radius:9px;cursor:pointer;font:inherit}
+.opt:hover{background:#ffe9a8}.ok{background:#8be28b!important;animation:pop .5s}.bad{background:#ff9a9a!important;animation:shake .45s}
+@keyframes pop{50%{transform:scale(1.04);box-shadow:0 0 16px #2c2}}@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+select{font:inherit;padding:2px 4px;border-radius:6px;border:1px solid #c9a24d;background:#fff}
+#leaf{display:none;position:absolute;top:6px;bottom:6px;width:calc(50% - 6px);z-index:10;background:linear-gradient(90deg,#e9d7a6,#fbf3dc,#e4cf99);box-shadow:0 0 30px #0008;backface-visibility:visible}
+#cover{position:absolute;inset:0;z-index:20;border-radius:8px;background:radial-gradient(circle at 50% 35%,#5a3612,#2a1503);border:3px solid var(--g);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;transform-origin:left center;cursor:pointer;box-shadow:inset 0 0 60px #000,0 0 30px #ffc94d66}
+#cover h2{font:700 clamp(22px,5vw,46px) Georgia,serif;color:var(--g);text-shadow:0 0 20px #ffb300}#cover p{color:var(--g2);font-size:clamp(11px,1.6vw,16px)}
+.nav{position:fixed;z-index:5;bottom:0;left:0;right:0;height:58px;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px 6px}
+.dot{width:30px;height:30px;padding:0!important;font-weight:700}.dot.cur{background:var(--g)!important;color:#2a1700!important}
+@media(max-width:700px){#spread{flex-direction:column}#wrap{height:52vh}#leaf{width:calc(100% - 12px)!important;left:6px!important;right:auto!important;transform-origin:left center!important}h1{display:none}#L{background:#f6ebcb}.tb button{padding:6px 9px;font-size:12px}}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas><div id="prog"></div>
+<div id="top"><h1>SQL · ГОЛОГРАФИЯЛЫҚ ОҚУЛЫҚ</h1>
+<div class="tb"><button id="bSnd">🔊 Дыбыс</button><button id="bFs">⛶ Толық экран</button><button id="bCl">📕 Жабу</button><button id="bRs">↺ Қайта бастау</button></div></div>
+<div id="hint">Голограмманы сүйреп айналдыр · дөңгелекпен/екі саусақпен жақындат · объектіні бас</div>
+<div id="info"></div>
+<div id="wrap"><div id="book"><div id="spread"><div class="pg" id="L"></div><div class="pg" id="R"></div><div id="leaf"></div></div>
+<div id="cover"><p>Деректер қоры · Колледж 3–4 курс</p><h2>SQL тілі және оның негізгі командалары</h2><p>✦ 3D голографиялық интерактивті оқулық ✦</p><button class="pbtn">📖 Кітапты ашу</button></div></div></div>
+<div class="nav"><button id="pv">◀</button><span id="dots" style="display:flex;gap:6px"></span><button id="nx">▶</button></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+/* ---------- STATE ---------- */
+let cur=0,busy=0,snd=true,visited=new Set(),prac=false,quizDone=false,qi=0,score=0,lock=false;
+/* ---------- SOUND ---------- */
+let ac;function beep(f,d=.15,type='sine',v=.07,f2){if(!snd)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,ac.currentTime);if(f2)o.frequency.exponentialRampToValueAtTime(f2,ac.currentTime+d);g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+const sfx={flip:()=>beep(400,.35,'triangle',.05,120),ok:()=>{beep(660,.12);setTimeout(()=>beep(880,.2),110)},bad:()=>beep(160,.3,'sawtooth',.05,90),pick:()=>beep(520,.12,'triangle')};
+/* ---------- THREE ---------- */
+const cv=$('#gl'),RN=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});RN.setPixelRatio(Math.min(devicePixelRatio,2));
+const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,1,.1,100);let zm=1,base=8;
+sc.add(new THREE.AmbientLight(0x8a7a5a,1.1));
+const pl=new THREE.PointLight(0xffd070,2.4,40);pl.position.set(3,5,6);sc.add(pl);
+const pl2=new THREE.PointLight(0x4aa8ff,1.3,40);pl2.position.set(-5,2,4);sc.add(pl2);
+const add=new THREE.MeshBasicMaterial({color:0xffc94d,transparent:true,opacity:.07,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false});
+const beam=new THREE.Mesh(new THREE.ConeGeometry(1.9,3.2,40,1,true),add);beam.rotation.x=Math.PI;beam.position.y=1.7;sc.add(beam);
+const ring=new THREE.Mesh(new THREE.TorusGeometry(1.5,.025,8,80),new THREE.MeshBasicMaterial({color:0xffe08a,blending:THREE.AdditiveBlending,transparent:true}));ring.rotation.x=Math.PI/2;ring.position.y=.1;sc.add(ring);
+const NP=220,pp=new Float32Array(NP*3);for(let i=0;i<NP;i++){pp[i*3]=(Math.random()-.5)*8;pp[i*3+1]=Math.random()*4;pp[i*3+2]=(Math.random()-.5)*4}
+const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pp,3));
+sc.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0xffd060,size:.045,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false})));
+const H=new THREE.Group();sc.add(H);
+function size(){const w=innerWidth,h=innerHeight;RN.setSize(w,h,false);cam.aspect=w/h;base=w/h<1?13:8;cam.updateProjectionMatrix()}addEventListener('resize',size);size();
+const GM=(c=0xffc94d,o=.55)=>new THREE.MeshStandardMaterial({color:c,emissive:0x6a4200,metalness:.75,roughness:.28,transparent:true,opacity:o});
+function M(g,c,o){const m=new THREE.Mesh(g,GM(c,o));m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g),new THREE.LineBasicMaterial({color:0xffeaa0,transparent:true,opacity:.9,blending:THREE.AdditiveBlending})));return m}
+function O(mesh,info,x=0,y=0,z=0){mesh.userData={...info,bs:mesh.scale.clone(),p:0};mesh.position.set(x,y,z);H.add(mesh);return mesh}
+/* ---------- HOLOGRAMS ---------- */
+const B=THREE.BoxGeometry,Cy=THREE.CylinderGeometry;
+const holo=[
+()=>{const info={t:'Деректер қоры (ДҚ)',d:'Ақпаратты жүйелі сақтап, іздеуге және өзгертуге мүмкіндік беретін деректер жиынтығы.',f:'Оны басқаратын бағдарлама — ДҚБЖ (MySQL, PostgreSQL, SQLite).'};
+ const g=new THREE.Group();for(let i=0;i<3;i++){const c=M(new Cy(1,1,.5,32),0xffc94d,.5);c.position.y=i*.62-.6;g.add(c)}
+ const r=M(new THREE.TorusGeometry(1.35,.05,8,48),0xffe08a,.7);r.rotation.x=Math.PI/2;r.position.y=1.5;g.add(r);O(g,info)},
+()=>{const rows=[['id','name','age','group'],[1,'Айдар',19,'ИС-31'],[2,'Дана',20,'ИС-31'],[3,'Нұрлан',18,'ВТ-32']];
+ rows.forEach((r,i)=>r.forEach((v,j)=>{const hd=i==0;const info=hd?{t:'Баған: '+v,d:'Баған (өріс, атрибут) — бірдей типті деректердің тік тізбегі.',f:'Әр баған тек өз типіндегі мәнді сақтайды (INT, VARCHAR, DATE...).'}:j==0?{t:'Бастапқы кілт: '+v,d:'PRIMARY KEY әр жолды бірегей анықтайды, қайталанбайды және бос болмайды.',f:'Басқа кестеден осы кілтке сілтеме жасау — сыртқы кілт (FOREIGN KEY).'}:{t:'Жол: '+r[1]+' · '+rows[0][j]+' = '+v,d:'Жол (жазба, кортеж) — бір объект туралы толық мәліметтер.',f:'Кестедегі жолдар саны өзгеріп отыра алады, ал бағандар құрылымы тұрақты.'};
+ O(M(new B(.8,.8,.8),hd?0xffe08a:0xffc94d,hd?.75:.45),info,(j-1.5)*1,(1.5-i)*1,0).scale.set(.95,.95,.95)}))},
+()=>{const mk=(i,t,d,f)=>({id:i,t,d,f});
+ const a=new THREE.Group();a.add(M(new THREE.TorusGeometry(.5,.09,10,32),0xffc94d,.6));const h=M(new Cy(.07,.07,.7,10),0xffe08a,.7);h.position.set(.5,-.5,0);h.rotation.z=Math.PI/4;a.add(h);
+ O(a,mk(0,'SELECT — таңдау','Кестеден деректерді оқиды. Кестені өзгертпейді.','SELECT * — барлық бағанды таңдайды.'),-2.4,0,0);
+ const b=new THREE.Group();b.add(M(new B(.9,.9,.9),0xffc94d,.5));const p1=M(new B(.2,.7,.95),0xfff0b0,.9),p2=M(new B(.7,.2,.95),0xfff0b0,.9);b.add(p1,p2);
+ O(b,mk(1,'INSERT — қосу','Кестеге жаңа жол қосады.','Бағандар тізімі мен VALUES-тегі мәндер саны сәйкес болуы керек.'),-.8,0,0);
+ O(M(new THREE.TorusKnotGeometry(.4,.14,64,10),0xffc94d,.6),mk(2,'UPDATE — жаңарту','Бар жолдардағы мәндерді өзгертеді.','WHERE жазылмаса, барлық жол өзгереді!'),.8,0,0);
+ O(M(new THREE.OctahedronGeometry(.7),0xff9a5a,.6),mk(3,'DELETE — жою','Кестеден жолдарды жояды, кесте құрылымы сақталады.','WHERE жоқ DELETE — барлық жолды жояды.'),2.4,0,0)},
+()=>{const A=O(M(new THREE.SphereGeometry(1.1,32,20),0xffc94d,.35),{t:'A кестесі',d:'Сол жақ кесте. LEFT JOIN-да оның барлық жолы нәтижеге түседі.',f:'Мысалы: students (студенттер).'},-.7,0,0);
+ O(M(new THREE.SphereGeometry(1.1,32,20),0x5ab4ff,.35),{t:'B кестесі',d:'Оң жақ кесте. Сәйкес мәні жоқ жолдар INNER JOIN-да түспейді.',f:'Мысалы: groups (топтар).'},.7,0,0);
+ const l=M(new THREE.SphereGeometry(1,32,20),0xfff2b0,.8);l.scale.set(.4,.85,.85);O(l,{t:'A ∩ B — INNER JOIN',d:'Екі кестеде де сәйкес кілті бар жолдар ғана нәтижеге түседі.',f:'ON students.group_id = groups.id — байланыс шарты.'},0,0,0)},
+()=>{[17,19,21,18,20,22,16,19].forEach((a,i)=>{const m=M(new B(.5,a*.1,.5),0xffc94d,.6);m.userData.age=a;O(m,{t:'Студент жасы: '+a,d:'Әр бағана — бір студент. Төмендегі шартты өзгертсең, таңдалған жолдар жарқырайды.',f:'WHERE жолдарды сүзеді, SELECT бағанды таңдайды.'},(i-3.5)*.65,a*.05-1,0)});hlBars()},
+()=>{[[1.6,.06,0xffc94d],[1.15,.05,0xffe08a],[.7,.04,0xffffff]].forEach(([r,t,c],i)=>{const m=M(new THREE.TorusGeometry(r,t,10,60),c,.7);m.rotation.x=Math.PI/2.6;m.userData.rs=(i+1)*.5;O(m,{t:'SQL біліміңнің дәрежесі',d:'Әр сақина — бір деңгей: түсіну, қолдану, талдау.',f:'Тестті аяқтап, нәтижеңді көр!'},0,0,0)});O(M(new THREE.IcosahedronGeometry(.4),0xfff0b0,.9),{t:'Білім өзегі',d:'SQL — ДҚ-мен жұмыс істеудің негізгі тілі.',f:'SELECT · INSERT · UPDATE · DELETE'},0,0,0)}];
+/* ---------- CHAPTERS ---------- */
+const CH=[
+{n:'Кіріспе',l:`<h2>1-тарау · Кіріспе</h2><p>Банк, әлеуметтік желі, колледж журналы — бәрінде миллиондаған жазба бар. Олар <b>деректер қорында</b> сақталады.</p><p>Голограммадағы алтын цилиндрлер — деректер қорының белгісі. Оны басып, айналдырып көр.</p><p><b>Сабақ мақсаты:</b> SQL тілінің негізгі командаларын түсіну және қолдану.</p>`,
+ r:()=>`<h2>❓ Проблемалық сұрақ</h2><p>Колледжде 10 000 студент бар. «ИС-31 тобындағы 18 жастан асқандарды» қағаз журналдан іздесең қанша уақыт кетер еді?</p><button class="pbtn" onclick="document.getElementById('ans1').style.display='block';sfx.pick()">💡 Ой бөлісу</button><div id="ans1" style="display:none"><p>Деректер қорына <b>SQL-сұраныс</b> жіберсең, нәтиже бірнеше миллисекундта шығады:</p><code>SELECT name FROM students WHERE group='ИС-31' AND age>18;</code></div>`},
+{n:'Жаңа білім',l:`<h2>2-тарау · Жаңа білім</h2><p><b>SQL</b> (Structured Query Language) — реляциялық деректер қорымен жұмыс істеуге арналған стандартты тіл. 1970 жылдары IBM-де жасалған, ANSI стандарты 1986 жылы қабылданды.</p><ul><li><b>Кесте</b> — деректер жиыны</li><li><b>Жол</b> — бір жазба</li><li><b>Баған</b> — өріс (атрибут)</li><li><b>PRIMARY KEY</b> — жолдың бірегей белгісі</li><li><b>FOREIGN KEY</b> — басқа кестеге сілтеме</li></ul>`,
+ r:()=>`<h2>Кесте: students</h2><table><tr><th>id</th><th>name</th><th>age</th><th>group</th></tr><tr><td>1</td><td>Айдар</td><td>19</td><td>ИС-31</td></tr><tr><td>2</td><td>Дана</td><td>20</td><td>ИС-31</td></tr><tr><td>3</td><td>Нұрлан</td><td>18</td><td>ВТ-32</td></tr></table><p><b>SQL командаларының топтары:</b></p><ul><li><b>DDL</b> — құрылым: CREATE, ALTER, DROP</li><li><b>DML</b> — деректер: INSERT, UPDATE, DELETE (SELECT-ті жиі DQL деп бөледі)</li><li><b>DCL</b> — құқық: GRANT, REVOKE</li><li><b>TCL</b> — транзакция: COMMIT, ROLLBACK</li></ul><p>👆 Голограммадағы кубтарды бас.</p>`},
+{n:'3D зертхана',l:`<h2>3-тарау · 3D зертхана</h2><p>Төрт негізгі команда деректермен жұмыстың <b>CRUD</b> циклін құрайды: Create (INSERT), Read (SELECT), Update (UPDATE), Delete (DELETE).</p><p>Голограммадағы төрт объектіні басып, әрқайсысының міндетін зертте. Оң жақтағы карточкаларды да басуға болады.</p><p>⚠️ <b>Назар аудар:</b> UPDATE мен DELETE командаларын WHERE-сіз жазба — барлық жолға әсер етеді.</p>`,
+ r:()=>{const q=['SELECT name, age FROM students WHERE age>18;','INSERT INTO students (name, age) VALUES (\'Алия\', 19);','UPDATE students SET age=20 WHERE id=1;','DELETE FROM students WHERE id=3;'],n=['🔍 SELECT','➕ INSERT','✏️ UPDATE','🗑 DELETE'];return `<h2>Командалар синтаксисі</h2>`+q.map((x,i)=>`<div class="card" onclick="pick(${i})"><b>${n[i]}</b><br><code>${x}</code></div>`).join('')}},
+{n:'Салыстыру',l:`<h2>4-тарау · Салыстыру</h2><p><b>Ұқсастық:</b> WHERE та, HAVING те шарт бойынша сүзеді.</p><p><b>Себеп-салдар:</b> бір кесте барлық мәліметті сақтаса, деректер қайталанады. Сондықтан кестелер бөлінеді де, <b>JOIN</b> арқылы қайта біріктіріледі.</p><p>Голограммада: сол жақ — A, оң жақ — B, ортасы — INNER JOIN нәтижесі.</p>`,
+ r:()=>`<h2>Айырмашылықтар</h2><table><tr><th></th><th>WHERE</th><th>HAVING</th></tr><tr><td>Қашан</td><td>Топтауға дейін</td><td>GROUP BY-дан кейін</td></tr><tr><td>Нысан</td><td>Жолдар</td><td>Топтар (COUNT, AVG...)</td></tr></table><table><tr><th></th><th>INNER JOIN</th><th>LEFT JOIN</th></tr><tr><td>Нәтиже</td><td>Тек сәйкес жолдар</td><td>Сол кестенің барлығы + сәйкестер</td></tr><tr><td>Сәйкес жоқ</td><td>Түспейді</td><td>NULL болады</td></tr></table><table><tr><th>DELETE</th><th>DROP TABLE</th></tr><tr><td>Жолдарды жояды</td><td>Кестені құрылымымен жояды</td></tr></table>`},
+{n:'Практика',l:`<h2>5-тарау · Практикалық тапсырма</h2><p><b>Тапсырма:</b> <code>students(id, name, age, group)</code> кестесінен жасы 18-ден <b>асатын</b> студенттердің аттарын жасы бойынша <b>кему</b> ретімен шығар.</p><p>Оң жақтан дұрыс бөліктерді таңда. Шартты өзгерткенде голограммадағы бағаналар (жас) қалай жарқырайтынын бақыла.</p>`,
+ r:()=>`<h2>Сұранысты құрастыр</h2><p><code>SELECT</code> <select id="s1"><option>*</option><option>name</option><option>age</option></select> <code>FROM students WHERE</code> <select id="s2" onchange="hlBars();sfx.pick()"><option>age &gt; 18</option><option>age &gt;= 18</option><option>age &lt; 18</option></select> <code>ORDER BY</code> <select id="s3"><option>name</option><option>age ASC</option><option>age DESC</option></select><code>;</code></p><button class="pbtn" onclick="chk()">✔ Тексеру</button><p id="fb" style="font-weight:700"></p>`},
+{n:'Тест',l:`<h2>6-тарау · Білімді тексеру</h2><p>6 сұраққа жауап бер. Дұрыс жауап жасыл, қате жауап қызыл түспен көрсетіледі.</p><p id="sc" style="font-size:1.3em;color:#8a4b00;font-weight:700"></p><p id="sum"></p>`,r:()=>qHTML()}];
+const Q=[['SQL аббревиатурасы нені білдіреді?',['Structured Query Language','Simple Question Logic','System Query Link','Standard Quick Language'],0],
+['Кестеге жаңа жол қосатын команда қайсы?',['SELECT','UPDATE','INSERT','CREATE'],2],
+['Кестедегі барлық бағанды таңдау үшін қандай белгі қолданылады?',['%','#','&','*'],3],
+['Жолдарды шарт бойынша сүзетін сөйлем қайсы?',['ORDER BY','WHERE','GROUP BY','FROM'],1],
+['WHERE-сіз жазылған DELETE FROM students; нәтижесі қандай?',['Бір жол жойылады','Кесте құрылымымен жойылады','Барлық жол жойылады, кесте қалады','Қате шығады'],2],
+['Топтау нәтижесін шартпен сүзу үшін не қолданылады?',['WHERE','HAVING','LIMIT','JOIN'],1]];
+/* ---------- RENDER / NAV ---------- */
+function prog(){const p=(visited.size+(prac?1:0)+(quizDone?1:0))/8;$('#prog').style.width=p*100+'%'}
+function setHolo(i){while(H.children.length)H.remove(H.children[0]);H.userData.s=0;H.rotation.set(.25,0,0);holo[i]();$('#info').style.display='none'}
+function render(){visited.add(cur);$('#L').innerHTML=CH[cur].l;$('#R').innerHTML=CH[cur].r();setHolo(cur);document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('cur',i==cur));$('#pv').disabled=cur==0;$('#nx').disabled=cur==5;if(cur==5)scoreUI();prog()}
+function flip(to){if(busy||to<0||to>5||to==cur)return;busy=1;const f=to>cur,lf=$('#leaf');lf.style.display='block';lf.style.left=f?'auto':'6px';lf.style.right=f?'6px':'auto';lf.style.transformOrigin=f?'left center':'right center';sfx.flip();
+ lf.animate([{transform:'rotateY(0)'},{transform:`rotateY(${f?-180:180}deg)`}],{duration:800,easing:'ease-in-out'}).onfinish=()=>{lf.style.display='none';busy=0};setTimeout(()=>{cur=to;render()},400)}
+$('#dots').innerHTML=CH.map((c,i)=>`<button class="dot" title="${c.n}">${i+1}</button>`).join('');
+document.querySelectorAll('.dot').forEach((d,i)=>d.onclick=()=>flip(i));
+$('#pv').onclick=()=>flip(cur-1);$('#nx').onclick=()=>flip(cur+1);
+addEventListener('keydown',e=>{if(e.key=='ArrowRight')flip(cur+1);if(e.key=='ArrowLeft')flip(cur-1)});
+/* cover open/close */
+const cover=$('#cover');
+function openBook(){if(cover.style.display=='none')return;sfx.flip();cover.animate([{transform:'rotateY(0)',opacity:1},{transform:'rotateY(-100deg)',opacity:0}],{duration:900,easing:'ease-in-out'}).onfinish=()=>{cover.style.display='none'}}
+function closeBook(){cover.style.display='flex';sfx.flip();cover.animate([{transform:'rotateY(-100deg)',opacity:0},{transform:'rotateY(0)',opacity:1}],{duration:800,easing:'ease-in-out'})}
+cover.onclick=openBook;$('#bCl').onclick=closeBook;
+$('#bSnd').onclick=e=>{snd=!snd;e.target.textContent=snd?'🔊 Дыбыс':'🔇 Дыбыс'};
+$('#bFs').onclick=()=>{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.()};
+$('#bRs').onclick=()=>{visited=new Set();prac=false;quizDone=false;qi=0;score=0;lock=false;cur=0;render();closeBook()};
+/* ---------- INTERACTIONS ---------- */
+function show(u){$('#info').innerHTML=`<b>${u.t}</b>${u.d}<i>💡 ${u.f}</i>`;$('#info').style.display='block';u.p=1;sfx.pick()}
+function pick(i){document.querySelectorAll('.card').forEach((c,j)=>c.classList.toggle('on',i==j));const o=H.children.find(c=>c.userData.id===i);if(o)show(o.userData)}
+$('#info').onclick=()=>$('#info').style.display='none';
+const ages=[17,19,21,18,20,22,16,19];
+function hlBars(){const s=$('#s2');if(!s)return;const v=s.value,f=a=>v.includes('>=')?a>=18:v.includes('>')?a>18:a<18;H.children.forEach(m=>{if(m.userData.age!=null){const on=f(m.userData.age);m.material.color.set(on?0xffd23a:0x3a4a7a);m.material.emissive.set(on?0xaa6a00:0x0a1030);m.material.opacity=on?.85:.35}})}
+function chk(){const ok=$('#s1').value=='name'&&$('#s2').value=='age > 18'&&$('#s3').value=='age DESC',fb=$('#fb');fb.textContent=ok?'✅ Дұрыс! Тамаша сұраныс.':'❌ Қайта ойлан: аттарды таңда, «асатын» = >, «кему» = DESC.';fb.style.color=ok?'#1a8a1a':'#c22';fb.animate(ok?[{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}]:[{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}],{duration:450});ok?sfx.ok():sfx.bad();if(ok){prac=true;prog();H.children.forEach(c=>c.userData.p=1)}}
+function qHTML(){if(qi>=Q.length)return `<h2>Нәтиже</h2><p style="font-size:1.4em">${score} / ${Q.length}</p><p>${score>=5?'🏆 Өте жақсы! SQL негіздерін меңгердің.':score>=3?'👍 Жақсы! Қиын сұрақтарды қайта қарап шық.':'📖 Тарауларды қайта оқып, тағы бір рет көр.'}</p><button class="pbtn" onclick="qi=0;score=0;lock=false;R2()">↻ Қайта тапсыру</button>`;
+ const q=Q[qi];return `<h2>Сұрақ ${qi+1} / ${Q.length}</h2><p><b>${q[0]}</b></p>`+q[1].map((o,i)=>`<button class="opt" onclick="ansQ(${i},this)">${o}</button>`).join('')}
+function R2(){$('#R').innerHTML=qHTML();scoreUI()}
+function scoreUI(){$('#sc').textContent=`Ұпай: ${score} / ${Q.length}`;$('#sum').textContent=qi>=Q.length?'Қорытынды: SELECT — оқу, INSERT — қосу, UPDATE — өзгерту, DELETE — жою. Шартты әрқашан WHERE-пен беруді ұмытпа!':''}
+function ansQ(i,b){if(lock)return;lock=true;const q=Q[qi],ok=i==q[2];b.classList.add(ok?'ok':'bad');if(!ok)document.querySelectorAll('.opt')[q[2]].classList.add('ok');ok?(score++,sfx.ok()):sfx.bad();H.children.forEach(c=>c.userData.p=ok?1:0);setTimeout(()=>{qi++;lock=false;if(qi>=Q.length){quizDone=true;prog();sfx.ok();H.children.forEach(c=>c.userData.p=1)}R2()},1100)}
+/* drag / zoom / click */
+let drag=false,ptr=new Map(),moved=0,pd=0;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,e);drag=true;moved=0;cv.style.cursor='grabbing'});
+cv.addEventListener('pointermove',e=>{if(!ptr.has(e.pointerId))return;const o=ptr.get(e.pointerId);
+ if(ptr.size==2){const [a,b]=[...ptr.values()];const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(pd)zm=Math.min(1.9,Math.max(.55,zm*pd/d));pd=d}
+ else{const dx=e.clientX-o.clientX,dy=e.clientY-o.clientY;moved+=Math.abs(dx)+Math.abs(dy);H.rotation.y+=dx*.01;H.rotation.x=Math.max(-1.2,Math.min(1.2,H.rotation.x+dy*.01))}ptr.set(e.pointerId,e)});
+const RC=new THREE.Raycaster();
+cv.addEventListener('pointerup',e=>{ptr.delete(e.pointerId);pd=0;if(!ptr.size){drag=false;cv.style.cursor='grab'}
+ if(moved<6){const r=cv.getBoundingClientRect();RC.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1),cam);const h=RC.intersectObjects(H.children,true)[0];if(h){let o=h.object;while(o.parent&&o.parent!==H)o=o.parent;if(o.userData.t)show(o.userData)}}});
+cv.addEventListener('pointercancel',e=>{ptr.delete(e.pointerId);drag=false});
+cv.addEventListener('wheel',e=>{e.preventDefault();zm=Math.min(1.9,Math.max(.55,zm*(1+e.deltaY*.001)))},{passive:false});
+/* ---------- LOOP ---------- */
+const clk=new THREE.Clock();
+function loop(){requestAnimationFrame(loop);const k=Math.min(clk.getDelta(),.05),t=clk.elapsedTime;
+ if(!drag)H.rotation.y+=k*.35;
+ H.userData.s=Math.min(1,(H.userData.s||0)+k*1.5);const e=1-Math.pow(1-H.userData.s,3);H.scale.setScalar(e*.85);H.position.y=1.5-(1-e)*1.4+Math.sin(t*1.2)*.07;
+ H.children.forEach(c=>{const u=c.userData;if(u.rs)c.rotation.z+=k*u.rs;if(u.p>0){u.p=Math.max(0,u.p-k*1.6);c.scale.copy(u.bs).multiplyScalar(1+Math.sin(u.p*Math.PI)*.3)}});
+ const a=pg.attributes.position;for(let i=0;i<NP;i++){a.array[i*3+1]+=k*.35;if(a.array[i*3+1]>4.2)a.array[i*3+1]=0}a.needsUpdate=true;
+ add.opacity=.06+Math.sin(t*2)*.02;ring.rotation.z+=k*.4;
+ const z=base*zm;cam.position.set(0,0,z);cam.lookAt(0,0,0);RN.render(sc,cam)}
+render();loop();
+</script>
+</body>
+</html>
